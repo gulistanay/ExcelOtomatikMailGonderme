@@ -1,1 +1,1 @@
-# Excel makro kullanılarak belirtilen saatte otomatik olarak şablondaki maili belirtilen adrese gönderme işlemini gerçekleştirir.
+# Excel makro kullanılarak belirtilen saatte otomatik olarak şablondaki içeriği belirtilen mail adresine gönderme işlemini gerçekleştirir.
