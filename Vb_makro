@@ -1,0 +1,104 @@
+Function RangetoHTML(rng As Range)
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+     TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        .Cells(1).PasteSpecial Paste:=8
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        .Cells(1).Select
+        Application.CutCopyMode = False
+        On Error Resume Next
+        .DrawingObjects.Visible = True
+        .DrawingObjects.Delete
+        On Error GoTo 0
+    End With
+   'Sayfayı htm dosyası olarak yayınla
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+   'RangetoHTML içine htm dosyası olan tüm verileri oku
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    RangetoHTML = ts.readall
+    ts.Close
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", _
+                          "align=left x:publishsource=")
+   'TempWB'yi kapat
+    TempWB.Close savechanges:=False
+   'htm dosyası olan bu fonksiyonu sil
+    Kill TempFile
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+End Function
+
+Sub Alarm()
+  Dim beepat As String
+  beepat = InputBox("Give Alarm at", "hh:mm:ss " & _
+    Format(Now, "mm:hh"), "17:00")
+  If beepat = "" Then
+    MsgBox "cancelled"
+    Exit Sub
+  End If
+   Application.OnTime TimeValue(beepat), "Belirlenen_Hucre_Araligini_Mesaj_Gövdesine_Gonder"
+  End Sub
+ 
+
+Sub Worksheet_SelectionChange(ByVal Target As Range)
+If Target = " Sub Alarm() " Then
+Run "Module1.Belirlenen_Hucre_Araligini_Mesaj_Gövdesine_Gonder"
+End If
+End Sub
+Sub Belirlenen_Hucre_Araligini_Mesaj_Gövdesine_Gonder()
+    Dim rng As Range
+    Dim OutApp As Object
+    Dim OutMail As Object
+    With Application
+        .EnableEvents = False
+        .ScreenUpdating = False
+    End With
+    Set rng = Nothing
+    On Error Resume Next
+    Set rng = Sheets("Sayfa1").Range("C3:D3").SpecialCells(xlCellTypeVisible)
+    On Error GoTo 0
+    If rng Is Nothing Then
+       MsgBox "The selection is not a range or the sheet is protected" & _
+               vbNewLine & "please correct and try again.", vbOKOnly
+        Exit Sub
+    End If
+    Set OutApp = CreateObject("Outlook.Application")
+    Set OutMail = OutApp.CreateItem(0)
+    On Error Resume Next
+    With OutMail
+        .To = "gulistanayy@gmail.com"
+        .CC = ""
+        .BCC = ""
+        .Subject = "Deneme"
+        .HTMLBody = RangetoHTML(rng)
+          'göndermek için .Send .Display
+        .Send
+    End With
+    On Error GoTo 0
+    With Application
+        .EnableEvents = True
+        .ScreenUpdating = True
+    End With
+    Set OutMail = Nothing
+    Set OutApp = Nothing
+    MsgBox "E-Mailleriniz gönderilmiştir.", vbInformation, Application.UserName
+End Sub
+
+            
+            
+            
+            
